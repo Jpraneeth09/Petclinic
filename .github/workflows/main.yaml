@@ -1,54 +1,55 @@
-name: ci/cd pipeline to deploy to tomcat
-on:
-   push:
-      branches: master
-jobs:
-   build-deploy:
-     runs-on: ubuntu-latest
-     steps:
-       - name: checkout code
-         uses: actions/checkout@v5
-       - name: set-up jdk
-         uses: actions/setup-java@v5
-         with:
-           distribution: 'temurin'
-           java-version: '17'
-           
-       - name: validate with maven  
-         run: mvn validate
-       - name: compile with maven  
-         run: mvn compile 
-       - name: test with maven  
-         run: mvn test
-       - name: package with maven  
-         run: mvn package
-       - name: verify war file  
-         run: ls -lh target/
-      # Switch back to Java 8
-       - name: Setup Java 8 Again
-         uses: actions/setup-java@v5
-         with:
-          distribution: temurin
-          java-version: '8'
+name: Train Ticket Reservation CI/CD
 
-      # Configure Maven Settings
-       - name: Configure Maven settings.xml
-         run: |
-          mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<EOF
-          <settings>
-            <servers>
-              <server>
-                <id>nexus</id>
-                <username>${{ secrets.NEXUS_USERNAME }}</username>
-                <password>${{ secrets.NEXUS_PASSWORD }}</password>
-              </server>
-            </servers>
-          </settings>
-          EOF
-    # Deploy to Nexus
-       - name: Deploy Artifact to Nexus
-         run: |
-           mvn deploy \
-            -DskipTests \
-            -DaltDeploymentRepository=nexus::default::${{ secrets.NEXUS_REPO_URL }}      
+on:
+  push:
+    branches:
+      - master
+
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      ECR_REPOSITORY: praneeth
+
+    steps:
+
+    - name: Checkout Source
+      uses: actions/checkout@v4
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+        cache: maven
+
+    - name: Build WAR
+      run: mvn clean package -DskipTests
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build Docker Image
+      run: |
+        docker build -t $ECR_REPOSITORY:latest .
+
+    - name: Tag Docker Image
+      run: |
+        docker tag $ECR_REPOSITORY:latest \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:latest
+
+    - name: Push Docker Image
+      run: |
+        docker push \
+          ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:latest
