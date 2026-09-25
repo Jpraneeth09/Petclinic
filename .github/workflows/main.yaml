@@ -1,11 +1,9 @@
-
-name: Petclinic  CI/CD
+name:  Petclinic CI/CD
 
 on:
   push:
     branches:
-      - master 
-
+      - master	
   workflow_dispatch:
 
 jobs:
@@ -14,7 +12,6 @@ jobs:
 
     env:
       ECR_REPOSITORY: praneeth
-
     steps:
 
     - name: Checkout Source
@@ -43,7 +40,7 @@ jobs:
 
     - name: Build Docker Image
       run: |
-        docker build -t $ECR_REPOSITORY:latest
+        docker build -t $ECR_REPOSITORY:latest .
 
     - name: Tag Docker Image
       run: |
