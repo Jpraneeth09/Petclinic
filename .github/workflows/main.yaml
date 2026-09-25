@@ -1,4 +1,5 @@
-name: Train Ticket Reservation CI/CD
+
+name: Petclinic  CI/CD
 
 on:
   push:
