@@ -47,7 +47,7 @@ jobs:
 
     - name: Tag Docker Image
       run: |
-        docker tag $ECR_REPOSITORY:latest \
+        docker tag $ECR_REPOSITORY:praneeth \
           ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/$ECR_REPOSITORY:praneeth
 
     - name: Push Docker Image
