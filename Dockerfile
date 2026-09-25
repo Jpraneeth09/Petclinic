@@ -1,8 +1,12 @@
-# Use an official Apache Tomcat image as a base
-FROM tomcat:9.0
+# Remove default Tomcat apps (optional, for a clean slate)
+RUN rm -rf /usr/local/tomcat/webapps/*
 
-# Copy the packaged WAR file into the webapps directory of Tomcat
-COPY target/petclinic.war /usr/local/tomcat/webapps/
+# Copy your WAR file into the Tomcat webapps directory
+# Rename it to ROOT.war for root path deployment
+COPY target/TrainBook-1.0.0-SNAPSHOT.war /usr/local/tomcat/webapps/ROOT.war
 
-# Expose port 8080 (Tomcat's default port)
+# Expose default Tomcat port
 EXPOSE 8080
+
+# Start Tomcat (default CMD in base image)
+CMD ["catalina.sh", "run"]
